@@ -14,7 +14,7 @@ const express = require("express");
 const User = require("./models/user");
 {{/nosql}}
 {{^nosql}}
-const db = require("./db-nosql");
+const db = require("./db");
 {{/nosql}}
 
 // import authentication library

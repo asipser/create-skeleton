@@ -29,22 +29,12 @@ const socket = require("./server-socket");
 // Server configuration below
 
 // TODO: Choose one of below database connection options
+const db = require("./db");
 const environment = process.env.NODE_ENV == "production" ? "prod" : "dev";
 let databaseName = "testdb"; // TODO: fill me in
-// --------- POSTGRES DATABASE ------------
-const dbPg = require("./db-pg");
-dbConfigPostgres = {
-  user: "asipser",
-  host: "localhost",
-  password: "pass",
-  port: 5432,
-  database: databaseName,
-};
-dbPg.init(dbConfigPostgres);
-// ----------------------------------------
 
+{{#nosql}}
 // --------- MONGO DATABASE ---------------
-const dbMongo = require("./db-mongo");
 dbConfigMongo = {
   // mongoConnectionURL: "mongodb+srv://<USERNAME>:<PASSWORD>@example.mongodb.net",
   mongoConnectionURL:
@@ -52,8 +42,19 @@ dbConfigMongo = {
   databaseName,
   environment,
 };
-dbMongo.init(dbConfigMongo);
-// ----------------------------------------
+db.init(dbConfigMongo);
+{{/nosql}}
+{{^nosql}}
+// --------- POSTGRES DATABASE ------------
+dbConfigPostgres = {
+  user: "asipser",
+  host: "localhost",
+  password: "pass",
+  port: 5432,
+  database: databaseName,
+};
+db.init(dbConfigPostgres);
+{{/nosql}}
 
 // create a new express server
 const app = decorateApp(express());

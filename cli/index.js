@@ -8,14 +8,18 @@ const EXCLUDED_FILES = new Set([
   "node_modules",
   ".gitkeep"
 ]);
+
 const TEMPLATE_PATH = path.resolve(__dirname, "..", "template");
+
+function convert_template_path_to_output_path(filepath) {
+  const relativePath = path.relative(TEMPLATE_PATH, filepath);
+  return path.join(".", relativePath);
+}
 
 function parse_file(filepath, mustacheConfig) {
   const file = fs.readFileSync(filepath);
-  const relativePath = path.relative(TEMPLATE_PATH, filepath);
-  const outputPath = path.join(".", relativePath);
   const updatedFile = mustache.render(file.toString(), mustacheConfig);
-  fs.writeFileSync(outputPath, updatedFile);
+  fs.writeFileSync(convert_template_path_to_output_path(filepath), updatedFile);
 }
 
 function parse_directory(dirpath, mustacheConfig) {
@@ -26,9 +30,9 @@ function parse_directory(dirpath, mustacheConfig) {
       const p = path.resolve(dirpath, f);
       const stat = fs.statSync(p);
       if (stat.isDirectory()) {
-        const relativePath = path.relative(TEMPLATE_PATH, p);
-        const outputPath = path.join(".", relativePath);
-        fs.mkdirSync(outputPath, { recursive: true });
+        fs.mkdirSync(convert_template_path_to_output_path(p), {
+          recursive: true
+        });
         parse_directory(p, mustacheConfig);
       } else {
         parse_file(p, mustacheConfig);
@@ -39,7 +43,7 @@ function parse_directory(dirpath, mustacheConfig) {
 
 function main() {
   const apiPath = path.join(TEMPLATE_PATH, "server", "auth.js");
-  const config = { nosql: true };
+  const config = { nosql: false };
 
   parse_directory(TEMPLATE_PATH, config);
 }
