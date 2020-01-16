@@ -18,8 +18,9 @@ function verify(token) {
     .then((ticket) => ticket.getPayload());
 }
 
+{{#nosql}}
 // gets user from DB, or makes a new account if it doesn't exist yet
-function getOrCreateUserMongo(user) {
+function getOrCreateUser(user) {
   // the "sub" field means "subject", which is a unique identifier for each user
   return User.findOne({ googleid: user.sub }).then(async (existingUser) => {
     if (existingUser) return existingUser.toJSON();
@@ -31,9 +32,9 @@ function getOrCreateUserMongo(user) {
 
     return (await newUser.save()).toJSON();
   });
-}
-
-function getOrCreateUserPostgres(user) {
+}{{/nosql}}
+{{^nosql}}
+function getOrCreateUser(user) {
   return db
     .query("SELECT id, name, googleid FROM users WHERE googleid=$1", [user.sub])
     .then((result, err) => {
@@ -50,12 +51,12 @@ function getOrCreateUserPostgres(user) {
         return db.query(insert, values).then((res, err) => res.rows[0]);
       }
     });
-}
+}{{/nosql}}
 
 async function login(req, res) {
   let user = await verify(req.body.token);
   try {
-    user = await getOrCreateUserPostgres(user);
+    user = await getOrCreateUser(user);
     console.log(user);
     req.session.user = user;
     res.send(user);

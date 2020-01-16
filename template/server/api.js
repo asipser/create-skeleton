@@ -10,8 +10,12 @@
 const express = require("express");
 
 // import models so we can interact with the database
+{{#nosql}}
 const User = require("./models/user");
-const db = require("./db-pg");
+{{/nosql}}
+{{^nosql}}
+const db = require("./db-nosql");
+{{/nosql}}
 
 // import authentication library
 const auth = require("./auth");
