@@ -1,6 +1,7 @@
 const { OAuth2Client } = require("google-auth-library");
 const User = require("./models/user");
 const socket = require("./server-socket");
+const db = require("./db-pg");
 
 // create a new OAuth client used to verify google sign-in
 //    TODO: replace with your own CLIENT_ID
@@ -18,32 +19,50 @@ function verify(token) {
 }
 
 // gets user from DB, or makes a new account if it doesn't exist yet
-function getOrCreateUser(user) {
+function getOrCreateUserMongo(user) {
   // the "sub" field means "subject", which is a unique identifier for each user
-  return User.findOne({ googleid: user.sub }).then((existingUser) => {
-    if (existingUser) return existingUser;
+  return User.findOne({ googleid: user.sub }).then(async (existingUser) => {
+    if (existingUser) return existingUser.toJSON();
 
     const newUser = new User({
       name: user.name,
       googleid: user.sub,
     });
 
-    return newUser.save();
+    return (await newUser.save()).toJSON();
   });
 }
 
-function login(req, res) {
-  verify(req.body.token)
-    .then((user) => getOrCreateUser(user))
-    .then((user) => {
-      // persist user in the session
-      req.session.user = user;
-      res.send(user);
-    })
-    .catch((err) => {
-      console.log(`Failed to log in: ${err}`);
-      res.status(401).send({ err });
+function getOrCreateUserPostgres(user) {
+  return db
+    .query("SELECT id, name, googleid FROM users WHERE googleid=$1", [user.sub])
+    .then((result, err) => {
+      if (err) {
+        console.error("Error when selecting user on login", err);
+        throw Error(err);
+      }
+
+      if (result.rows.length > 0) {
+        return result.rows[0];
+      } else {
+        const insert = "INSERT INTO users(name, googleid) VALUES($1, $2) RETURNING *";
+        const values = [user.name, user.sub];
+        return db.query(insert, values).then((res, err) => res.rows[0]);
+      }
     });
+}
+
+async function login(req, res) {
+  let user = await verify(req.body.token);
+  try {
+    user = await getOrCreateUserPostgres(user);
+    console.log(user);
+    req.session.user = user;
+    res.send(user);
+  } catch (err) {
+    console.log(`Failed to log in: ${err}`);
+    throw Error(err);
+  }
 }
 
 function logout(req, res) {

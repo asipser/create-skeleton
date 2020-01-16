@@ -13,17 +13,12 @@
 | - Actually starts the webserver
 */
 
-// validator runs some basic checks to make sure you've set everything up correctly
-// this is a tool provided by staff, so you don't need to worry about it
-const validator = require("./validator");
-validator.checkSetup();
-
 //import libraries needed for the webserver to work!
 const http = require("http");
 const express = require("express"); // backend framework for our node server.
 const session = require("express-session"); // library that stores info about each connected user
-const mongoose = require("mongoose"); // library to connect to MongoDB
 const path = require("path"); // provide utilities for working with file and directory paths
+const { decorateApp } = require("@awaitjs/express");
 
 const api = require("./api");
 const auth = require("./auth");
@@ -32,24 +27,36 @@ const auth = require("./auth");
 const socket = require("./server-socket");
 
 // Server configuration below
-// TODO change connection URL after setting up your team database
-const mongoConnectionURL = "FILL ME IN";
-// TODO change database name to the name you chose
-const databaseName = "FILL ME IN";
 
-// connect to mongodb
-mongoose
-  .connect(mongoConnectionURL, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    dbName: databaseName,
-  })
-  .then(() => console.log("Connected to MongoDB"))
-  .catch((err) => console.log(`Error connecting to MongoDB: ${err}`));
+// TODO: Choose one of below database connection options
+const environment = process.env.NODE_ENV == "production" ? "prod" : "dev";
+let databaseName = "testdb"; // TODO: fill me in
+// --------- POSTGRES DATABASE ------------
+const dbPg = require("./db-pg");
+dbConfigPostgres = {
+  user: "asipser",
+  host: "localhost",
+  password: "pass",
+  port: 5432,
+  database: databaseName,
+};
+dbPg.init(dbConfigPostgres);
+// ----------------------------------------
+
+// --------- MONGO DATABASE ---------------
+const dbMongo = require("./db-mongo");
+dbConfigMongo = {
+  // mongoConnectionURL: "mongodb+srv://<USERNAME>:<PASSWORD>@example.mongodb.net",
+  mongoConnectionURL:
+    "mongodb+srv://a:a@cluster0-xyvyf.mongodb.net/test?retryWrites=true&w=majority",
+  databaseName,
+  environment,
+};
+dbMongo.init(dbConfigMongo);
+// ----------------------------------------
 
 // create a new express server
-const app = express();
-app.use(validator.checkRoutes);
+const app = decorateApp(express());
 
 // allow us to process POST requests
 app.use(express.json());

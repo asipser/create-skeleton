@@ -11,17 +11,21 @@ const express = require("express");
 
 // import models so we can interact with the database
 const User = require("./models/user");
+const db = require("./db-pg");
 
 // import authentication library
 const auth = require("./auth");
 
+//add error handling to async endpoints
+const { decorateRouter } = require("@awaitjs/express");
+
 // api endpoints: all these paths will be prefixed with "/api/"
-const router = express.Router();
+const router = decorateRouter(express.Router());
 
 //initialize socket
 const socket = require("./server-socket");
 
-router.post("/login", auth.login);
+router.postAsync("/login", auth.login);
 router.post("/logout", auth.logout);
 router.get("/whoami", (req, res) => {
   if (!req.user) {
@@ -41,6 +45,10 @@ router.post("/initsocket", (req, res) => {
 // |------------------------------|
 // | write your API methods below!|
 // |------------------------------|
+
+router.getAsync("/example", async function(req, res, next) {
+  res.send({ hello: "world" });
+});
 
 // anything else falls to this "not found" case
 router.all("*", (req, res) => {

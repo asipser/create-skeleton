@@ -8,7 +8,7 @@ const getUserFromSocketID = (socketid) => socketToUserMap[socketid];
 const getSocketFromSocketID = (socketid) => io.sockets.connected[socketid];
 
 const addUser = (user, socket) => {
-  const oldSocket = userToSocketMap[user._id];
+  const oldSocket = userToSocketMap[user.id];
   if (oldSocket && oldSocket.id !== socket.id) {
     // there was an old tab open for this user, force it to disconnect
     // FIXME: is this the behavior you want?
@@ -16,12 +16,12 @@ const addUser = (user, socket) => {
     delete socketToUserMap[oldSocket.id];
   }
 
-  userToSocketMap[user._id] = socket;
+  userToSocketMap[user.id] = socket;
   socketToUserMap[socket.id] = user;
 };
 
 const removeUser = (user, socket) => {
-  if (user) delete userToSocketMap[user._id];
+  if (user) delete userToSocketMap[user.id];
   delete socketToUserMap[socket.id];
 };
 
