@@ -2,38 +2,46 @@ path = require("path");
 mustache = require("mustache");
 fs = require("fs");
 
-function writeFileSyncRecursive(filename, content, charset) {
-  // create folder path if not exists
-  filename
-    .split("/")
-    .slice(0, -1)
-    .reduce((last, folder) => {
-      let folderPath = last ? last + "/" + folder : folder;
-      console.log(folderPath);
-      if (!fs.existsSync(folderPath)) fs.mkdirSync(folderPath);
-      return folderPath;
-    });
+const EXCLUDED_FILES = new Set([
+  "README.md",
+  ".git",
+  "node_modules",
+  ".gitkeep"
+]);
+const TEMPLATE_PATH = path.resolve(__dirname, "..", "template");
 
-  fs.writeFileSync(filename, content, charset);
+function parse_file(filepath, mustacheConfig) {
+  const file = fs.readFileSync(filepath);
+  const relativePath = path.relative(TEMPLATE_PATH, filepath);
+  const outputPath = path.join(".", relativePath);
+  const updatedFile = mustache.render(file.toString(), mustacheConfig);
+  fs.writeFileSync(outputPath, updatedFile);
+}
+
+function parse_directory(dirpath, mustacheConfig) {
+  // list all files at path
+  files = fs.readdirSync(dirpath);
+  files.forEach(f => {
+    if (!EXCLUDED_FILES.has(f)) {
+      const p = path.resolve(dirpath, f);
+      const stat = fs.statSync(p);
+      if (stat.isDirectory()) {
+        const relativePath = path.relative(TEMPLATE_PATH, p);
+        const outputPath = path.join(".", relativePath);
+        fs.mkdirSync(outputPath, { recursive: true });
+        parse_directory(p, mustacheConfig);
+      } else {
+        parse_file(p, mustacheConfig);
+      }
+    }
+  });
 }
 
 function main() {
-  const templatePath = path.resolve(__dirname, "..", "template");
-
-  const apiPath = path.join(templatePath, "server", "auth.js");
+  const apiPath = path.join(TEMPLATE_PATH, "server", "auth.js");
   const config = { nosql: true };
 
-  // const apiPath = path;
-  files = fs.readdirSync(templatePath);
-  files.forEach(f => {
-    console.log(f);
-  });
-  const file = fs.readFileSync(apiPath);
-  const outputPath = path.resolve(".");
-  const outputApiPath = path.join(outputPath, "server", "api.js");
-
-  const updatedFile = mustache.render(file.toString(), config);
-  writeFileSyncRecursive(outputApiPath, updatedFile);
+  parse_directory(TEMPLATE_PATH, config);
 }
 
 main();
