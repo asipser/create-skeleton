@@ -1,3 +1,4 @@
+{{#nosql}}
 const mongoose = require("mongoose");
 var schemaOptions = {
   toJSON: {
@@ -11,11 +12,16 @@ var schemaOptions = {
 
 const UserSchema = new mongoose.Schema(
   {
-    name: String,
+    firstName: String,
+    lastName: String,
     googleid: String,
+    email: String,
+    password: String
   },
   schemaOptions
 );
 
 // compile model from schema
 module.exports = mongoose.model("user", UserSchema);
+
+{{/nosql}}

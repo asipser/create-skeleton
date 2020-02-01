@@ -1,94 +1,83 @@
-const { OAuth2Client } = require("google-auth-library");
+/*
+|--------------------------------------------------------------------------
+| auth.js -- Auth API routes
+|--------------------------------------------------------------------------
+|
+| This file defines the API authentication routes for your server.
+|
+*/
+
+const express = require("express");
+const passport = require("./passport");
+
 const User = require("./models/user");
+
+const router = express.Router();
+
 const socket = require("./server-socket");
-{{^nosql}}
-const db = require("./db");
-{{/nosql}}
-// create a new OAuth client used to verify google sign-in
-//    TODO: replace with your own CLIENT_ID
-const CLIENT_ID = "121479668229-t5j82jrbi9oejh7c8avada226s75bopn.apps.googleusercontent.com";
-const client = new OAuth2Client(CLIENT_ID);
+const SALT_ROUNDS = 10;
+const bcrypt = require("bcrypt");
 
-// accepts a login token from the frontend, and verifies that it's legit
-function verify(token) {
-  return client
-    .verifyIdToken({
-      idToken: token,
-      audience: CLIENT_ID,
-    })
-    .then((ticket) => ticket.getPayload());
-}
-
-{{#nosql}}
-// gets user from DB, or makes a new account if it doesn't exist yet
-function getOrCreateUser(user) {
-  // the "sub" field means "subject", which is a unique identifier for each user
-  return User.findOne({ googleid: user.sub }).then(async (existingUser) => {
-    if (existingUser) return existingUser.toJSON();
-
-    const newUser = new User({
-      name: user.name,
-      googleid: user.sub,
-    });
-
-    return (await newUser.save()).toJSON();
-  });
-}{{/nosql}}
-{{^nosql}}
-function getOrCreateUser(user) {
-  return db
-    .query("SELECT id, name, googleid FROM users WHERE googleid=$1", [user.sub])
-    .then((result, err) => {
-      if (err) {
-        console.error("Error when selecting user on login", err);
-        throw Error(err);
-      }
-
-      if (result.rows.length > 0) {
-        return result.rows[0];
-      } else {
-        const insert = "INSERT INTO users(name, googleid) VALUES($1, $2) RETURNING *";
-        const values = [user.name, user.sub];
-        return db.query(insert, values).then((res, err) => res.rows[0]);
-      }
-    });
-}{{/nosql}}
-
-async function login(req, res) {
-  let user = await verify(req.body.token);
-  try {
-    user = await getOrCreateUser(user);
-    console.log(user);
-    req.session.user = user;
-    res.send(user);
-  } catch (err) {
-    console.log(`Failed to log in: ${err}`);
-    throw Error(err);
-  }
-}
-
-function logout(req, res) {
-  req.session.user = null;
-  res.send({});
-}
-
-function populateCurrentUser(req, res, next) {
-  // simply populate "req.user" for convenience
-  req.user = req.session.user;
+const addSocketIdtoSession = (req, res, next) => {
+  req.session.socketId = req.query.socketId;
   next();
-}
-
-function ensureLoggedIn(req, res, next) {
-  if (!req.user) {
-    return res.status(401).send({ err: "not logged in" });
-  }
-
-  next();
-}
-
-module.exports = {
-  login,
-  logout,
-  populateCurrentUser,
-  ensureLoggedIn,
 };
+
+// authentication routes
+router.get(
+  "/google",
+  addSocketIdtoSession,
+  passport.authenticate("google", { scope: ["profile"] })
+);
+
+router.get(
+  "/google/callback",
+  passport.authenticate("google", { failureRedirect: "/login" }),
+  function(req, res) {
+    console.log(`success logged in with user ID ${req.user.id}`);
+    if (req.session.socketId) {
+      socket
+        .getIo()
+        .in(req.session.socketId)
+        .emit("google", req.user);
+      res.end();
+    } else {
+      res.redirect("/");
+    }
+  }
+);
+
+router.get("/logout", function(req, res) {
+  req.logout();
+  res.send({});
+});
+
+router.post("/register", async function(req, res) {
+  const pass = req.body.password;
+  const email = req.body.email;
+  try {
+    if (await User.findOne({ email })) {
+      res.status(403).send({ error: "Email already exists" });
+    }
+    const hashedSaltedPwd = await bcrypt.hash(pass, SALT_ROUNDS);
+    const newUser = new User({
+      email: email,
+      password: hashedSaltedPwd,
+    });
+
+    req.login(await newUser.save(), function(err) {
+      if (err) {
+        return next(err);
+      }
+      res.send(req.user);
+    });
+  } catch (error) {
+    throw error;
+  }
+});
+
+router.post("/login", passport.authenticate("local"), function(req, res) {
+  res.send(req.user);
+});
+
+module.exports = router;

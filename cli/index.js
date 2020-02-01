@@ -19,7 +19,12 @@ function convert_template_path_to_output_path(filepath) {
 function parse_file(filepath, mustacheConfig) {
   const file = fs.readFileSync(filepath);
   const updatedFile = mustache.render(file.toString(), mustacheConfig);
-  fs.writeFileSync(convert_template_path_to_output_path(filepath), updatedFile);
+  if (updatedFile != "") {
+    fs.writeFileSync(
+      convert_template_path_to_output_path(filepath),
+      updatedFile
+    );
+  }
 }
 
 function parse_directory(dirpath, mustacheConfig) {
@@ -43,7 +48,7 @@ function parse_directory(dirpath, mustacheConfig) {
 
 function main() {
   const apiPath = path.join(TEMPLATE_PATH, "server", "auth.js");
-  const config = { nosql: false };
+  const config = { nosql: true, socket: { session: true } };
 
   parse_directory(TEMPLATE_PATH, config);
 }

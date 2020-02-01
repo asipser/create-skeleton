@@ -5,10 +5,11 @@ import Skeleton from "./pages/Skeleton.js";
 
 import "../utilities.css";
 
-import { socket } from "../client-socket.js";
+import { library } from "@fortawesome/fontawesome-svg-core";
+import { fab } from "@fortawesome/free-brands-svg-icons";
+import { fas } from "@fortawesome/free-solid-svg-icons";
 
-import { get, post } from "../utilities";
-
+library.add(fab, fas);
 /**
  * Define the "App" component as a class.
  */
@@ -17,32 +18,18 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      userId: undefined,
+      user: undefined,
     };
   }
 
-  componentDidMount() {
-    get("/api/whoami").then((user) => {
-      if (user.id) {
-        // they are registed in the database, and currently logged in.
-        this.setState({ userId: user.id });
-      }
-    });
-  }
+  componentDidMount() {}
 
-  handleLogin = (res) => {
-    console.log(`Logged in as ${res.profileObj.name}`);
-    const userToken = res.tokenObj.id_token;
-    post("/api/login", { token: userToken }).then((user) => {
-      console.log(user);
-      this.setState({ userId: user.id });
-      post("/api/initsocket", { socketid: socket.id });
-    });
+  setUser = (user) => {
+    this.setState({ user });
   };
 
   handleLogout = () => {
-    this.setState({ userId: undefined });
-    post("/api/logout");
+    this.setState({ user: undefined });
   };
 
   render() {
@@ -51,9 +38,9 @@ class App extends Component {
         <Router>
           <Skeleton
             path="/"
-            handleLogin={this.handleLogin}
-            handleLogout={this.handleLogout}
-            userId={this.state.userId}
+            setUser={this.setUser}
+            logout={this.handleLogout}
+            user={this.state.user}
           />
           <NotFound default />
         </Router>

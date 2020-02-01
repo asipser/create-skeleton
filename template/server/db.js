@@ -14,6 +14,7 @@ module.exports = {
       .catch((err) => console.log(`Error connecting to MongoDB: ${err}`));
   },
 };
+
 {{/nosql}}
 {{^nosql}}
 const { Pool } = require("pg");
@@ -37,4 +38,5 @@ module.exports = {
     return pool.query(text, params);
   },
 };
+
 {{/nosql}}

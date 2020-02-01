@@ -16,15 +16,25 @@
 //import libraries needed for the webserver to work!
 const http = require("http");
 const express = require("express"); // backend framework for our node server.
-const session = require("express-session"); // library that stores info about each connected user
+
+// library that stores info about each connected user
+const session = require("express-session")({
+  secret: "my-secret",
+  resave: false,
+  saveUninitialized: true,
+});
+
 const path = require("path"); // provide utilities for working with file and directory paths
 const { decorateApp } = require("@awaitjs/express");
 
 const api = require("./api");
 const auth = require("./auth");
+const passport = require("./passport");
 
+{{#socket}}
 // socket stuff
 const socket = require("./server-socket");
+{{/socket}}
 
 // Server configuration below
 
@@ -62,17 +72,15 @@ const app = decorateApp(express());
 // allow us to process POST requests
 app.use(express.json());
 
-// set up a session, which will persist login data across requests
-app.use(
-  session({
-    secret: "session-secret",
-    resave: false,
-    saveUninitialized: false,
-  })
-);
+//register express session middleware
+app.use(session);
 
-// this checks if the user is logged in, and populates "req.user"
-app.use(auth.populateCurrentUser);
+//register passport & passport session middleware
+app.use(passport.initialize());
+app.use(passport.session());
+
+//connect authentication routes
+app.use("/auth", auth);
 
 // connect user-defined routes
 app.use("/api", api);
@@ -105,7 +113,9 @@ app.use((err, req, res, next) => {
 // hardcode port to 3000 for now
 const port = 3000;
 const server = http.Server(app);
-socket.init(server);
+{{#socket}}
+socket.init(server, session);
+{{/socket}}
 
 server.listen(port, () => {
   console.log(`Server running on port: ${port}`);

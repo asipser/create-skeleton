@@ -17,34 +17,11 @@ const User = require("./models/user");
 const db = require("./db");
 {{/nosql}}
 
-// import authentication library
-const auth = require("./auth");
-
 //add error handling to async endpoints
 const { decorateRouter } = require("@awaitjs/express");
 
 // api endpoints: all these paths will be prefixed with "/api/"
 const router = decorateRouter(express.Router());
-
-//initialize socket
-const socket = require("./server-socket");
-
-router.postAsync("/login", auth.login);
-router.post("/logout", auth.logout);
-router.get("/whoami", (req, res) => {
-  if (!req.user) {
-    // not logged in
-    return res.send({});
-  }
-
-  res.send(req.user);
-});
-
-router.post("/initsocket", (req, res) => {
-  // do nothing if user not logged in
-  if (req.user) socket.addUser(req.user, socket.getSocketFromSocketID(req.body.socketid));
-  res.send({});
-});
 
 // |------------------------------|
 // | write your API methods below!|
