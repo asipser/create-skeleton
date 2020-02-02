@@ -1,6 +1,11 @@
+{{#auth}}
 const passport = require("passport");
+{{#auth.google}}
 var GoogleStrategy = require("passport-google-oauth20");
+{{/auth.google}}
+{{#auth.local}}
 var LocalStrategy = require("passport-local");
+{{/auth.local}}
 
 {{#nosql}}
 const User = require("./models/user");
@@ -10,6 +15,7 @@ const db = require("./db");
 {{/nosql}}
 const bcrypt = require("bcrypt");
 
+{{#auth.google}}
 {{#nosql}}
 // gets user from DB, or makes a new account if it doesn't exist yet
 function getOrCreateGoogleUser(profile) {
@@ -61,7 +67,8 @@ passport.use(
     }
   )
 );
-
+{{/auth.google}}
+{{#auth.local}}
 {{#nosql}}
 function getLocalUser(email) {
   return User.findOne({ email })
@@ -98,6 +105,8 @@ passport.use(
     return done(null, false);
   })
 );
+{{/auth.local}}
+
 
 passport.serializeUser(function(user, done) {
   done(null, user.id);
@@ -106,7 +115,9 @@ passport.serializeUser(function(user, done) {
 passport.deserializeUser(function(id, done) {
   {{#nosql}}
   User.findById(id)
+    {{#auth.local}}
     .select("-password")
+    {{/auth.local}}
     .then(user => {
       done(null, user.toJSON());
     });
@@ -121,3 +132,4 @@ passport.deserializeUser(function(id, done) {
 });
 
 module.exports = passport;
+{{/auth}}

@@ -1,3 +1,4 @@
+{{#auth.local}}
 import React, { Component } from "react";
 import { post } from "../../utilities.js";
 
@@ -102,3 +103,4 @@ class LocalAuth extends Component {
 }
 
 export default LocalAuth;
+{{/auth.local}}

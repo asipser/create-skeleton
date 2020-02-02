@@ -1,3 +1,4 @@
+{{#auth}}
 /*
 |--------------------------------------------------------------------------
 | auth.js -- Auth API routes
@@ -6,7 +7,6 @@
 | This file defines the API authentication routes for your server.
 |
 */
-
 const express = require("express");
 const passport = require("./passport");
 {{#nosql}}
@@ -106,3 +106,4 @@ router.post("/login", passport.authenticate("local"), function(req, res) {
 });
 
 module.exports = router;
+{{/auth}}

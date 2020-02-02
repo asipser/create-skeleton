@@ -2,6 +2,14 @@ import path from "path";
 import mustache from "mustache";
 import fs from "fs";
 
+const { promisify } = require("util");
+
+const readFileAsync = promisify(fs.readFile);
+const readDirAsync = promisify(fs.readdir);
+const statAsync = promisify(fs.stat);
+const mkdirAsync = promisify(fs.mkdir);
+const writeFileAsync = promisify(fs.writeFile);
+
 const EXCLUDED_FILES = new Set([
   "README.md",
   ".git",
@@ -12,16 +20,15 @@ const EXCLUDED_FILES = new Set([
 const TEMPLATE_PATH = path.resolve(__dirname, "..", "template");
 
 function convert_template_path_to_output_path(targetDirectory, filepath) {
-  console.log(filepath);
   const relativePath = path.relative(TEMPLATE_PATH, filepath);
   return path.join(targetDirectory, relativePath);
 }
 
-function parse_file(filepath, mustacheConfig) {
-  const file = fs.readFileSync(filepath);
+async function parse_file(filepath, mustacheConfig) {
+  const file = await readFileAsync(filepath);
   const updatedFile = mustache.render(file.toString(), mustacheConfig);
   if (updatedFile != "") {
-    fs.writeFileSync(
+    return writeFileAsync(
       convert_template_path_to_output_path(
         mustacheConfig.targetDirectory,
         filepath
@@ -31,36 +38,35 @@ function parse_file(filepath, mustacheConfig) {
   }
 }
 
-function parse_directory(dirpath, mustacheConfig) {
+async function parse_directory(dirpath, mustacheConfig) {
   // list all files at path
-  const files = fs.readdirSync(dirpath);
-  files.forEach(f => {
-    if (!EXCLUDED_FILES.has(f)) {
-      const p = path.resolve(dirpath, f);
-      const stat = fs.statSync(p);
-      if (stat.isDirectory()) {
-        fs.mkdirSync(
-          convert_template_path_to_output_path(
-            mustacheConfig.targetDirectory,
-            p
-          ),
-          {
-            recursive: true
-          }
-        );
-        parse_directory(p, mustacheConfig);
-      } else {
-        parse_file(p, mustacheConfig);
+  const files = await readDirAsync(dirpath);
+  return Promise.all(
+    files.map(async f => {
+      if (!EXCLUDED_FILES.has(f)) {
+        const p = path.resolve(dirpath, f);
+        const stat = await statAsync(p);
+        if (stat.isDirectory()) {
+          await mkdirAsync(
+            convert_template_path_to_output_path(
+              mustacheConfig.targetDirectory,
+              p
+            ),
+            {
+              recursive: true
+            }
+          );
+          return parse_directory(p, mustacheConfig);
+        } else {
+          return parse_file(p, mustacheConfig);
+        }
       }
-    }
-  });
+    })
+  );
 }
 
 export async function createProject(options) {
-  console.log(options);
-
   //check that targetDirectory does NOT exist or is EMPTY
-  fs.mkdirSync(path.join(".", options.targetDirectory));
-
-  parse_directory(TEMPLATE_PATH, options);
+  await mkdirAsync(path.join(".", options.targetDirectory));
+  return parse_directory(TEMPLATE_PATH, options);
 }

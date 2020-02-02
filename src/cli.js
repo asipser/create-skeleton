@@ -1,5 +1,6 @@
 import arg from "arg";
 import inquirer from "inquirer";
+import ora from "ora";
 import { createProject } from "./main";
 
 function parseArgumentsIntoOptions(rawArgs) {
@@ -100,5 +101,14 @@ async function promptForMissingOptions(options) {
 export async function cli(args) {
   let options = parseArgumentsIntoOptions(args);
   options = await promptForMissingOptions(options);
-  await createProject(options);
+  const spinner = ora({
+    text: "Copying files over",
+    interval: 100,
+    spinner: "simpleDots"
+  }).start();
+  createProject(options).then(() => {
+    spinner.succeed(
+      "Done copying files over! Cd into the target directory and npm install :)"
+    );
+  });
 }

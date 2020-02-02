@@ -28,8 +28,10 @@ const path = require("path"); // provide utilities for working with file and dir
 const { decorateApp } = require("@awaitjs/express");
 
 const api = require("./api");
+{{#auth}}
 const auth = require("./auth");
 const passport = require("./passport");
+{{/auth}}
 
 {{#socket}}
 // socket stuff
@@ -75,12 +77,14 @@ app.use(express.json());
 //register express session middleware
 app.use(session);
 
+{{#auth}}
 //register passport & passport session middleware
 app.use(passport.initialize());
 app.use(passport.session());
 
 //connect authentication routes
 app.use("/auth", auth);
+{{/auth}}
 
 // connect user-defined routes
 app.use("/api", api);

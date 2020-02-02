@@ -1,3 +1,4 @@
+{{#auth.google}}
 import React, { Component } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { socket } from "../../client-socket.js";
@@ -54,3 +55,4 @@ class OAuth extends Component {
 }
 
 export default OAuth;
+{{/auth.google}}

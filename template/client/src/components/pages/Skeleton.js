@@ -19,12 +19,14 @@ class Skeleton extends Component {
   render() {
     return (
       <>
+{{#auth}}
         <Auth
           logout={this.props.logout}
           loggedIn={this.props.user !== undefined}
           setUser={this.props.setUser}
           providers={["google"]}
         />
+{{/auth}}
         <h1>Hello World</h1>
       </>
     );

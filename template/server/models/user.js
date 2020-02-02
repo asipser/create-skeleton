@@ -12,11 +12,15 @@ var schemaOptions = {
 
 const UserSchema = new mongoose.Schema(
   {
+{{#auth.google}}
     firstName: String,
     lastName: String,
     googleid: String,
+{{/auth.google}}
+{{#auth.local}}
     email: String,
     password: String
+{{/auth.local}}
   },
   schemaOptions
 );

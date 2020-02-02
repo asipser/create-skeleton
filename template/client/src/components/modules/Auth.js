@@ -1,7 +1,11 @@
 import React, { Component } from "react";
 import { get } from "../../utilities";
+{{#auth.google}}
 import OAuth from "./OAuth";
+{{/auth.google}}
+{{#auth.local}}
 import LocalAuth from "./LocalAuth";
+{{/auth.local}}
 
 /**
  * Proptypes
@@ -32,9 +36,12 @@ class Auth extends Component {
 
   render() {
     const { loggedIn, disabled, providers } = this.props;
+{{#auth.google}}
     const providersList = providers.map((provider) => (
       <OAuth key={provider} login={this.login} provider={provider} disabled={disabled} />
     ));
+{{/auth.google}}
+
 
     return (
       <>
@@ -44,8 +51,12 @@ class Auth extends Component {
           </div>
         ) : (
           <>
+{{#auth.local}}
             <LocalAuth login={this.login} disabled={disabled} />
+{{/auth.local}}
+{{#auth.google}}
             {providersList}
+{{/auth.google}}
           </>
         )}
       </>
