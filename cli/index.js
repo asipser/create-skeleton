@@ -48,7 +48,7 @@ function parse_directory(dirpath, mustacheConfig) {
 
 function main() {
   const apiPath = path.join(TEMPLATE_PATH, "server", "auth.js");
-  const config = { nosql: true, socket: { session: true } };
+  const config = { nosql: false, socket: { session: true } };
 
   parse_directory(TEMPLATE_PATH, config);
 }

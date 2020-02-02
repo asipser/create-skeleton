@@ -1,8 +1,11 @@
 {{^nosql}}
 CREATE TABLE "users" (
   "id" bigserial PRIMARY KEY,
-  "name" varchar(255),
-  "googleid" varchar(100)
+  "firstname" varchar(255),
+  "lastname" varchar(255),
+  "googleid" varchar(100) UNIQUE,
+  "email" varchar(100) UNIQUE,
+  "password" varchar(100)
 );
 
 {{/nosql}}

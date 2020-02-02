@@ -9,8 +9,12 @@
 
 const express = require("express");
 const passport = require("./passport");
-
+{{#nosql}}
 const User = require("./models/user");
+{{/nosql}}
+{{^nosql}}
+const db = require("./db");
+{{/nosql}}
 
 const router = express.Router();
 
@@ -52,27 +56,48 @@ router.get("/logout", function(req, res) {
   res.send({});
 });
 
-router.post("/register", async function(req, res) {
-  const pass = req.body.password;
-  const email = req.body.email;
-  try {
-    if (await User.findOne({ email })) {
-      res.status(403).send({ error: "Email already exists" });
+{{#nosql}}
+async function createUser(email, password) {
+  //throws if user exists
+  if (await User.findOne({ email })) {
+    throw Error("Email already exists");
+  }
+  const hashedSaltedPwd = await bcrypt.hash(password, SALT_ROUNDS);
+  const newUser = new User({
+    email: email,
+    password: hashedSaltedPwd,
+  });
+  return newUser.save();
+}
+{{/nosql}}
+{{^nosql}}
+async function createUser(email, password) {
+  //throws if user exists
+  db.query("SELECT id FROM users WHERE email=$1", [email]).then((result, err) => {
+    if (result.rows.length > 0) {
+      throw Error("Email already exists");
     }
-    const hashedSaltedPwd = await bcrypt.hash(pass, SALT_ROUNDS);
-    const newUser = new User({
-      email: email,
-      password: hashedSaltedPwd,
-    });
+  });
+  const hashedSaltedPwd = await bcrypt.hash(password, SALT_ROUNDS);
+  return db
+    .query("INSERT INTO users(email, password) VALUES($1, $2) RETURNING *", [
+      email,
+      hashedSaltedPwd,
+    ])
+    .then((result, err) => result.rows[0]);
+}
+{{/nosql}}
 
-    req.login(await newUser.save(), function(err) {
-      if (err) {
-        return next(err);
-      }
+router.post("/register", async function(req, res) {
+  try {
+    const user = await createUser(req.body.email, req.body.password);
+    req.login(user, function(err) {
+      req.user.password = undefined;
       res.send(req.user);
     });
   } catch (error) {
-    throw error;
+    console.log(error);
+    res.status(403).send({ error: "Email already exists" });
   }
 });
 
