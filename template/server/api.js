@@ -9,6 +9,8 @@
 
 const express = require("express");
 
+const logger = require("pino")(); // import pino logger
+
 // import models so we can interact with the database
 {{#nosql}}
 const User = require("./models/user");
@@ -28,12 +30,13 @@ const router = decorateRouter(express.Router());
 // |------------------------------|
 
 router.getAsync("/example", async function(req, res, next) {
+  logger.info("Log Hello World");
   res.send({ hello: "world" });
 });
 
 // anything else falls to this "not found" case
 router.all("*", (req, res) => {
-  console.log(`API route not found: ${req.method} ${req.url}`);
+  logger.warn(`API route not found: ${req.method} ${req.url}`);
   res.status(404).send({ msg: "API route not found" });
 });
 

@@ -8,6 +8,7 @@
 |
 */
 const express = require("express");
+const logger = require("pino")(); // import pino logger
 const passport = require("./passport");
 {{#nosql}}
 const User = require("./models/user");
@@ -21,6 +22,7 @@ const router = express.Router();
 const socket = require("./server-socket");
 const SALT_ROUNDS = 10;
 const bcrypt = require("bcrypt");
+const ALREADY_REGISTERED_ERROR = "email_conflict";
 
 const addSocketIdtoSession = (req, res, next) => {
   req.session.socketId = req.query.socketId;
@@ -38,7 +40,7 @@ router.get(
   "/google/callback",
   passport.authenticate("google", { failureRedirect: "/login" }),
   function(req, res) {
-    console.log(`success logged in with user ID ${req.user.id}`);
+    logger.info(`Google Auth: Logged in user ID ${req.user.id}`);
     if (req.session.socketId) {
       socket
         .getIo()
@@ -52,6 +54,7 @@ router.get(
 );
 
 router.get("/logout", function(req, res) {
+  logger.info(`Logged out user ID ${req.user.id}`);
   req.logout();
   res.send({});
 });
@@ -60,7 +63,7 @@ router.get("/logout", function(req, res) {
 async function createUser(email, password) {
   //throws if user exists
   if (await User.findOne({ email })) {
-    throw Error("Email already exists");
+    throw Error(ALREADY_REGISTERED_ERROR);
   }
   const hashedSaltedPwd = await bcrypt.hash(password, SALT_ROUNDS);
   const newUser = new User({
@@ -75,7 +78,7 @@ async function createUser(email, password) {
   //throws if user exists
   db.query("SELECT id FROM users WHERE email=$1", [email]).then((result, err) => {
     if (result.rows.length > 0) {
-      throw Error("Email already exists");
+      throw Error(ALREADY_REGISTERED_ERROR);
     }
   });
   const hashedSaltedPwd = await bcrypt.hash(password, SALT_ROUNDS);
@@ -92,16 +95,20 @@ router.post("/register", async function(req, res) {
   try {
     const user = await createUser(req.body.email, req.body.password);
     req.login(user, function(err) {
+    logger.info(`Local Auth: Registed user ID ${req.user.id}`);
       req.user.password = undefined;
       res.send(req.user);
     });
   } catch (error) {
-    console.log(error);
-    res.status(403).send({ error: "Email already exists" });
+    if (error.message != ALREADY_REGISTERED_ERROR) {
+      logger.error("Error registering user", error);
+    }
+    res.status(403).send({ error: ALREADY_REGISTERED_ERROR });
   }
 });
 
 router.post("/login", passport.authenticate("local"), function(req, res) {
+  logger.info(`Local Auth: Logged in user ID ${req.user.id}`);
   res.send(req.user);
 });
 

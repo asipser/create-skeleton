@@ -34,13 +34,12 @@ const passport = require("./passport");
 {{/auth}}
 
 {{#socket}}
-// socket stuff
+// import socket
 const socket = require("./server-socket");
 {{/socket}}
 
-// Server configuration below
+const logger = require("pino")(); // import pino logger
 
-// TODO: Choose one of below database connection options
 const db = require("./db");
 const environment = process.env.NODE_ENV == "production" ? "prod" : "dev";
 let databaseName = "testdb"; // TODO: fill me in
@@ -103,8 +102,8 @@ app.use((err, req, res, next) => {
   const status = err.status || 500;
   if (status === 500) {
     // 500 means Internal Server Error
-    console.log("The server errored when processing a request!");
-    console.log(err);
+    logger.error("The server errored when processing a request!");
+    logger.error(err);
   }
 
   res.status(status);
@@ -122,5 +121,5 @@ socket.init(server, session);
 {{/socket}}
 
 server.listen(port, () => {
-  console.log(`Server running on port: ${port}`);
+  logger.info(`Server running on port: ${port}`);
 });

@@ -1,5 +1,5 @@
 {
-  "name": "@aaron_sipser/create-project",
+  "name": "@aaron_sipser/create-react-skeleton",
   "version": "1.0.0",
   "description": "",
   "main": "src/index.js",
@@ -7,8 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "@aaron_sipser/create-project": "bin/create-project",
-    "create-project": "bin/create-project"
+    "@aaron_sipser/create-react-skeleton": "bin/create-react-skeleton",
+    "create-react-skeleton": "bin/create-react-skeleton"
   },
   "repository": {
     "type": "git",
@@ -16,7 +16,7 @@
   },
   "keywords": [
     "cli",
-    "create-project"
+    "create-react-skeleton"
   ],
   "publishConfig": {
     "access": "public"
