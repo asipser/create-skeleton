@@ -13,6 +13,9 @@
 | - Actually starts the webserver
 */
 
+//get environment variables configured
+require('dotenv').config()
+
 //import libraries needed for the webserver to work!
 const http = require("http");
 const express = require("express"); // backend framework for our node server.
@@ -40,35 +43,11 @@ const socket = require("./server-socket");
 
 const logger = require("pino")(); // import pino logger
 
-const db = require("./db");
-const environment = process.env.NODE_ENV == "production" ? "prod" : "dev";
-let databaseName = "testdb"; // TODO: fill me in
-
-{{#nosql}}
-// --------- MONGO DATABASE ---------------
-dbConfigMongo = {
-  // mongoConnectionURL: "mongodb+srv://<USERNAME>:<PASSWORD>@example.mongodb.net",
-  mongoConnectionURL:
-    "mongodb+srv://a:a@cluster0-xyvyf.mongodb.net/test?retryWrites=true&w=majority",
-  databaseName,
-  environment,
-};
-db.init(dbConfigMongo);
-{{/nosql}}
-{{^nosql}}
-// --------- POSTGRES DATABASE ------------
-dbConfigPostgres = {
-  user: "asipser",
-  host: "localhost",
-  password: "pass",
-  port: 5432,
-  database: databaseName,
-};
-db.init(dbConfigPostgres);
-{{/nosql}}
+//connect and initialize your database!
+require("./db").init();
 
 // create a new express server
-const app = decorateApp(express());
+const app = express();
 
 // allow us to process POST requests
 app.use(express.json());

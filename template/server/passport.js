@@ -56,8 +56,8 @@ function getOrCreateGoogleUser(profile) {
 passport.use(
   new GoogleStrategy(
     {
-      clientID: "1023896289089-dmo7at78mmlrhto4u6e7ifhlt44rlait.apps.googleusercontent.com",
-      clientSecret: "jEWQbBdvUZcHDWK6yasjEeiq",
+      clientID: process.env.PASSPORT_GOOGLE_ID,
+      clientSecret: process.env.PASSPORT_GOOGLE_SECRET,
       callbackURL: "/auth/google/callback",
     },
     function(accessToken, refreshToken, profile, done) {

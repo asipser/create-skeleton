@@ -6,10 +6,9 @@ module.exports = {
   init: (dbConfig) => {
     // connect to mongodb
     mongoose
-      .connect(dbConfig.mongoConnectionURL, {
+      .connect(process.env.MONGO_CONNECTION_URI, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
-        dbName: `${dbConfig.databaseName}-${dbConfig.environment}`,
       })
       .then(() => logger.info("Server connected to MongoDB"))
       .catch((err) => logger.error("Error connecting to MongoDB", err));
@@ -25,8 +24,9 @@ let pool;
 
 module.exports = {
   pool,
-  init: (dbConfig) => {
-    pool = new Pool(dbConfig);
+  init: () => {
+    const connectionString = process.env.POSTGRES_CONNECTION_URI;
+    pool = new Pool({connectionString});
     pool.connect((err, client, done) => {
       if (err) logger.error("Error connecting to Postgres", err);
       else logger.info("Server connected to Postgres");
