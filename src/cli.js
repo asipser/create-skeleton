@@ -2,10 +2,10 @@ import arg from "arg";
 import inquirer from "inquirer";
 import ora from "ora";
 import { createProject } from "./main";
+import chalk from "chalk";
+import fs from "fs";
 
 function parseArgumentsIntoOptions(rawArgs) {
-  const config = { nosql: false, socket: { session: true } };
-
   const args = arg(
     {},
     {
@@ -21,16 +21,6 @@ async function promptForMissingOptions(options) {
   const config = {};
 
   const questions = [];
-  if (!options.targetDirectory) {
-    questions.push({
-      type: "input",
-      name: "targetDirectory",
-      default: "",
-      message:
-        "Please enter a folder name. Empty string will start project in current directory."
-    });
-  }
-
   questions.push({
     type: "list",
     name: "database",
@@ -91,24 +81,33 @@ async function promptForMissingOptions(options) {
     config.socket = { session: answers.socketsession == true };
   }
 
-  if (answers.targetDirectory) {
-    config.targetDirectory = answers.targetDirectory;
-  }
-
   return { ...options, ...config };
 }
 
 export async function cli(args) {
   let options = parseArgumentsIntoOptions(args);
-  options = await promptForMissingOptions(options);
-  const spinner = ora({
-    text: "Copying files over",
-    interval: 100,
-    spinner: "simpleDots"
-  }).start();
-  createProject(options).then(() => {
-    spinner.succeed(
-      "Done copying files over! Cd into the target directory and npm install :)"
+  if (!options.targetDirectory) {
+    console.log("Please specify the project directory:");
+    console.log(
+      "  " +
+        chalk.blue("create-react-skeleton ") +
+        chalk.green("<project-directory>")
     );
-  });
+  } else if (fs.existsSync(options.targetDirectory)) {
+    console.log(
+      chalk.redBright("Error: ") + "Project directory must not already exist"
+    );
+  } else {
+    options = await promptForMissingOptions(options);
+    const spinner = ora({
+      text: "Copying files over",
+      interval: 100,
+      spinner: "simpleDots"
+    }).start();
+    createProject(options).then(() => {
+      spinner.succeed(
+        "Done copying files over! Cd into the target directory and npm install :)"
+      );
+    });
+  }
 }
