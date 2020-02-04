@@ -106,7 +106,12 @@ export async function cli(args) {
     }).start();
     createProject(options).then(() => {
       spinner.succeed(
-        "Done copying files over! Cd into the target directory and npm install :)"
+        `Finished creating project! Do the following to get started.\n` +
+          `    1. ${chalk.bold("cd " + options.targetDirectory)}\n` +
+          `    2. ${chalk.bold("npm i")}\n` +
+          `    3. update the ${chalk.bold(
+            ".env"
+          )} with your environment variables`
       );
     });
   }
