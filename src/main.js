@@ -74,8 +74,6 @@ async function copyTemplateFiles(options) {
 }
 
 export async function createProject(options) {
-  //check that targetDirectory does NOT exist or is EMPTY
-  await mkdirAsync(path.join(".", options.targetDirectory));
   const tasks = new Listr([
     {
       title: "Copy project files",
@@ -91,6 +89,6 @@ export async function createProject(options) {
   ]);
 
   await tasks.run();
-  console.log("%s Project ready", chalk.green.bold("DONE"));
+  console.log("%s Project ready", chalk.greenBright("DONE"));
   return true;
 }

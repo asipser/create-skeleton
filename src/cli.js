@@ -1,9 +1,17 @@
 import arg from "arg";
 import inquirer from "inquirer";
-import ora from "ora";
+import path from "path";
 import { createProject } from "./main";
 import chalk from "chalk";
 import fs from "fs";
+
+// Constants: user selection choices for CLI
+const MONGODB = "MongoDB";
+const POSTGRES = "PostgresQL";
+const NO_AUTH = "No Authentication";
+const ONLY_GOOGLE = "Only Google OAuth";
+const ONLY_LOCAL = "Only Local Auth";
+const LOCAL_AND_GOOGLE = "Both Local & Google Auth";
 
 function parseArgumentsIntoOptions(rawArgs) {
   const args = arg(
@@ -25,21 +33,19 @@ async function promptForMissingOptions(options) {
     type: "list",
     name: "database",
     message: "Please choose which database provider you want",
-    choices: ["MongoDB", "PostgresQL"],
-    default: "MongoDB"
+    choices: [MONGODB, POSTGRES],
+    default: MONGODB
   });
 
   questions.push({
-    type: "checkbox",
+    type: "list",
     name: "auth",
-    message: "Which form of authentication do you want? Pick none for no auth.",
-    choices: [
-      { name: "google", value: "google" },
-      { name: "local", value: "local" }
-    ]
+    message: "Please choose what form of authentication you want",
+    choices: [NO_AUTH, ONLY_GOOGLE, ONLY_LOCAL, LOCAL_AND_GOOGLE]
   });
 
   let answers = await inquirer.prompt(questions);
+
   const socketQuestion = [
     {
       type: "confirm",
@@ -55,23 +61,24 @@ async function promptForMissingOptions(options) {
         "Do you want access to express sessions in socket (ex: req.user)?"
     }
   ];
-  if (answers.auth.length == 0) {
+
+  //if no auth, check if they want socket.
+  if (answers.auth == NO_AUTH) {
     answers = { ...answers, ...(await inquirer.prompt(socketQuestion)) };
-  } else {
-    answers.socket = true;
   }
-  if (answers.auth.length != 0 || answers.socket) {
+  // check if users want socket sessions
+  if (answers.auth != NO_AUTH || answers.socket) {
     answers = { ...answers, ...(await inquirer.prompt(socketSessionQuestion)) };
   }
 
-  config.nosql = answers.database == "MongoDB";
-
-  if (answers.auth.length == 0) {
+  //update user configuration based off questions answered
+  config.nosql = answers.database == MONGODB;
+  if (answers.auth == NO_AUTH) {
     delete config.auth;
   } else {
     config.auth = {
-      google: answers.auth.includes("google"),
-      local: answers.auth.includes("local")
+      google: answers.auth == ONLY_GOOGLE || answers.auth == LOCAL_AND_GOOGLE,
+      local: answers.auth == ONLY_LOCAL || answers.auth == LOCAL_AND_GOOGLE
     };
   }
 
@@ -99,6 +106,7 @@ export async function cli(args) {
     );
   } else {
     options = await promptForMissingOptions(options);
+    fs.mkdirSync(path.join(".", options.targetDirectory));
     await createProject(options);
   }
 }
