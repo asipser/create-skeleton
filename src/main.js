@@ -1,6 +1,10 @@
 import path from "path";
 import mustache from "mustache";
 import fs from "fs";
+import chalk from "chalk";
+
+import Listr from "listr";
+import { projectInstall } from "pkg-install";
 
 const { promisify } = require("util");
 
@@ -65,8 +69,28 @@ async function parse_directory(dirpath, mustacheConfig) {
   );
 }
 
+async function copyTemplateFiles(options) {
+  return parse_directory(TEMPLATE_PATH, options);
+}
+
 export async function createProject(options) {
   //check that targetDirectory does NOT exist or is EMPTY
   await mkdirAsync(path.join(".", options.targetDirectory));
-  return parse_directory(TEMPLATE_PATH, options);
+  const tasks = new Listr([
+    {
+      title: "Copy project files",
+      task: () => copyTemplateFiles(options)
+    },
+    {
+      title: "Install dependencies",
+      task: () =>
+        projectInstall({
+          cwd: `${options.targetDirectory}`
+        })
+    }
+  ]);
+
+  await tasks.run();
+  console.log("%s Project ready", chalk.green.bold("DONE"));
+  return true;
 }

@@ -99,20 +99,6 @@ export async function cli(args) {
     );
   } else {
     options = await promptForMissingOptions(options);
-    const spinner = ora({
-      text: "Copying files over",
-      interval: 100,
-      spinner: "simpleDots"
-    }).start();
-    createProject(options).then(() => {
-      spinner.succeed(
-        `Finished creating project! Do the following to get started.\n` +
-          `    1. ${chalk.bold("cd " + options.targetDirectory)}\n` +
-          `    2. ${chalk.bold("npm i")}\n` +
-          `    3. update the ${chalk.bold(
-            ".env"
-          )} with your environment variables`
-      );
-    });
+    await createProject(options);
   }
 }
