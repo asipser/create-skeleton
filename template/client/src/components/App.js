@@ -4,6 +4,7 @@ import NotFound from "./pages/NotFound.js";
 import Skeleton from "./pages/Skeleton.js";
 
 import "../utilities.css";
+import { socket } from "../client-socket.js";
 
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { fab } from "@fortawesome/free-brands-svg-icons";
@@ -20,6 +21,11 @@ class App extends Component {
     this.state = {
       user: undefined,
     };
+{{#auth}}
+    socket.on("user", (user) => {
+      this.setState({ user });
+    });
+{{/auth}}
   }
 
   componentDidMount() {}

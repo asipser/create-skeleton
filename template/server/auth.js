@@ -20,10 +20,13 @@ const db = require("./db");
 const router = express.Router();
 
 const socket = require("./server-socket");
+{{#auth.local}}
 const SALT_ROUNDS = 10;
 const bcrypt = require("bcrypt");
+{{/auth.local}}
 const ALREADY_REGISTERED_ERROR = "email_conflict";
 
+{{#auth.google}}
 const addSocketIdtoSession = (req, res, next) => {
   req.session.socketId = req.query.socketId;
   next();
@@ -52,6 +55,7 @@ router.get(
     }
   }
 );
+{{/auth.google}}
 
 router.get("/logout", function(req, res) {
   logger.info(`Logged out user ID ${req.user.id}`);
@@ -59,6 +63,7 @@ router.get("/logout", function(req, res) {
   res.send({});
 });
 
+{{#auth.local}}
 {{#nosql}}
 async function createUser(email, password) {
   //throws if user exists
@@ -111,6 +116,7 @@ router.post("/login", passport.authenticate("local"), function(req, res) {
   logger.info(`Local Auth: Logged in user ID ${req.user.id}`);
   res.send(req.user);
 });
+{{/auth.local}}
 
 module.exports = router;
 {{/auth}}

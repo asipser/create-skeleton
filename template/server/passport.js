@@ -21,7 +21,9 @@ const bcrypt = require("bcrypt");
 function getOrCreateGoogleUser(profile) {
   // the "sub" field means "subject", which is a unique identifier for each user
   return User.findOne({ googleid: profile.id })
+{{#auth.local}}
     .select("-password")
+{{/auth.local}}
     .then(async (existingUser) => {
       if (existingUser) return existingUser.toJSON();
       const newUser = new User({
@@ -113,22 +115,22 @@ passport.serializeUser(function(user, done) {
 });
 
 passport.deserializeUser(function(id, done) {
-  {{#nosql}}
+{{#nosql}}
   User.findById(id)
-    {{#auth.local}}
+{{#auth.local}}
     .select("-password")
-    {{/auth.local}}
+{{/auth.local}}
     .then(user => {
       done(null, user.toJSON());
     });
-  {{/nosql}}
-  {{^nosql}}
+{{/nosql}}
+{{^nosql}}
   db
     .query("SELECT id, email, googleid FROM users WHERE id=$1", [id])
     .then((result, err) => {
       done(err, result.rows[0]);
     });
-  {{/nosql}}
+{{/nosql}}
 });
 
 module.exports = passport;

@@ -3,7 +3,7 @@ const mongoose = require("mongoose"); // library to connect to MongoDB
 const logger = require("pino")(); // import pino logger
 
 module.exports = {
-  init: (dbConfig) => {
+  init: () => {
     // connect to mongodb
     mongoose
       .connect(process.env.MONGO_CONNECTION_URI, {
