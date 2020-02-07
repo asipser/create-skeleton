@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { Router } from "@reach/router";
 import NotFound from "./pages/NotFound.js";
-import Skeleton from "./pages/Skeleton.js";
+import Home from "./pages/Home.js";
 
 import "../utilities.css";
 import { socket } from "../client-socket.js";
@@ -42,7 +42,7 @@ class App extends Component {
     return (
       <>
         <Router>
-          <Skeleton
+          <Home
             path="/"
             setUser={this.setUser}
             logout={this.handleLogout}

@@ -10,21 +10,24 @@
 const express = require("express");
 const logger = require("pino")(); // import pino logger
 const passport = require("./passport");
+//add error handling to async endpoints
+const { decorateRouter } = require("@awaitjs/express");
+
+// api endpoints: all these paths will be prefixed with "/api/"
+const router = decorateRouter(express.Router());
+
+const socket = require("./server-socket");
+{{#auth.local}}
+const SALT_ROUNDS = 10;
+const bcrypt = require("bcrypt");
 {{#nosql}}
 const User = require("./models/user");
 {{/nosql}}
 {{^nosql}}
 const db = require("./db");
 {{/nosql}}
-
-const router = express.Router();
-
-const socket = require("./server-socket");
-{{#auth.local}}
-const SALT_ROUNDS = 10;
-const bcrypt = require("bcrypt");
-{{/auth.local}}
 const ALREADY_REGISTERED_ERROR = "email_conflict";
+{{/auth.local}}
 
 {{#auth.google}}
 const addSocketIdtoSession = (req, res, next) => {
@@ -57,7 +60,7 @@ router.get(
 );
 {{/auth.google}}
 
-router.get("/logout", function(req, res) {
+router.get("/logout", (req, res) => {
   logger.info(`Logged out user ID ${req.user.id}`);
   req.logout();
   res.send({});
@@ -96,7 +99,7 @@ async function createUser(email, password) {
 }
 {{/nosql}}
 
-router.post("/register", async function(req, res) {
+router.postAsync("/register", async (req, res) => {
   try {
     const user = await createUser(req.body.email, req.body.password);
     req.login(user, function(err) {
@@ -107,6 +110,7 @@ router.post("/register", async function(req, res) {
   } catch (error) {
     if (error.message != ALREADY_REGISTERED_ERROR) {
       logger.error("Error registering user", error);
+      throw error;
     }
     res.status(403).send({ error: ALREADY_REGISTERED_ERROR });
   }

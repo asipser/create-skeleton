@@ -30,6 +30,13 @@ async function promptForMissingOptions(options) {
 
   const questions = [];
   questions.push({
+    type: "input",
+    name: "title",
+    message:
+      "What is the name of your application? This will show up in the website title.",
+    default: "CHANGE ME"
+  });
+  questions.push({
     type: "list",
     name: "database",
     message: "Please choose which database provider you want",
@@ -72,7 +79,9 @@ async function promptForMissingOptions(options) {
   }
 
   //update user configuration based off questions answered
+  config.title = answers.title;
   config.nosql = answers.database == MONGODB;
+
   if (answers.auth == NO_AUTH) {
     delete config.auth;
   } else {

@@ -1,11 +1,11 @@
 import React, { Component } from "react";
 
 import "../../utilities.css";
-import "./Skeleton.css";
-
-import Auth from "../modules/Auth";
-
-class Skeleton extends Component {
+import "./Home.css";
+{{#auth}}
+import AuthController from "../modules/AuthController";
+{{/auth}}
+class Home extends Component {
   constructor(props) {
     super(props);
     // Initialize Default State
@@ -20,7 +20,7 @@ class Skeleton extends Component {
     return (
       <>
 {{#auth}}
-        <Auth
+        <AuthController
           logout={this.props.logout}
           loggedIn={this.props.user !== undefined}
           setUser={this.props.setUser}
@@ -33,4 +33,4 @@ class Skeleton extends Component {
   }
 }
 
-export default Skeleton;
+export default Home;

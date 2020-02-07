@@ -1,3 +1,4 @@
+{{#auth}}
 import React, { Component } from "react";
 import { get } from "../../utilities";
 {{#auth.google}}
@@ -15,7 +16,7 @@ import LocalAuth from "./LocalAuth";
  * @param {string[]} providers: providers for oauth
  */
 
-class Auth extends Component {
+class AuthController extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -42,7 +43,6 @@ class Auth extends Component {
     ));
 {{/auth.google}}
 
-
     return (
       <>
         {loggedIn ? (
@@ -64,4 +64,5 @@ class Auth extends Component {
   }
 }
 
-export default Auth;
+export default AuthController;
+{{/auth}}

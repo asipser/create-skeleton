@@ -89,6 +89,6 @@ export async function createProject(options) {
   ]);
 
   await tasks.run();
-  console.log("%s Project ready", chalk.greenBright("DONE"));
+  console.log(chalk.green("DONE. Project is ready :-)"));
   return true;
 }

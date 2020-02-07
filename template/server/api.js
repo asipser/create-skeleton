@@ -29,7 +29,7 @@ const router = decorateRouter(express.Router());
 // | write your API methods below!|
 // |------------------------------|
 
-router.getAsync("/example", async function(req, res, next) {
+router.getAsync("/example", async (req, res, next) => {
   logger.info("Log Hello World");
   res.send({ hello: "world" });
 });

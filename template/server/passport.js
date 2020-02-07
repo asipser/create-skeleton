@@ -18,22 +18,21 @@ const bcrypt = require("bcrypt");
 {{#auth.google}}
 {{#nosql}}
 // gets user from DB, or makes a new account if it doesn't exist yet
-function getOrCreateGoogleUser(profile) {
+async function getOrCreateGoogleUser(profile) {
   // the "sub" field means "subject", which is a unique identifier for each user
-  return User.findOne({ googleid: profile.id })
+  const existingUser = await User.findOne({ googleid: profile.id })
 {{#auth.local}}
-    .select("-password")
+    .select("-password");
 {{/auth.local}}
-    .then(async (existingUser) => {
-      if (existingUser) return existingUser.toJSON();
-      const newUser = new User({
-        firstName: profile.name.givenName,
-        lastName: profile.name.familyName,
-        googleid: profile.id,
-      });
-      return (await newUser.save()).toJSON();
+  if (existingUser) return existingUser.toJSON();
+  const newUser = new User({
+    firstName: profile.name.givenName,
+    lastName: profile.name.familyName,
+    googleid: profile.id,
   });
-}{{/nosql}}
+  return (await newUser.save()).toJSON();
+}
+{{/nosql}}
 {{^nosql}}
 function getOrCreateGoogleUser(profile) {
   return db
@@ -52,7 +51,8 @@ function getOrCreateGoogleUser(profile) {
         return db.query(insert, values).then((res, err) => res.rows[0]);
       }
     });
-}{{/nosql}}
+}
+{{/nosql}}
 
 // set up passport configs
 passport.use(
