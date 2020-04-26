@@ -43,6 +43,12 @@ class OAuth extends Component {
       this.popup.close();
     });
   }
+  
+  componentWillUnmount() {
+    const { provider } = this.props;
+    socket.removeAllListeners(provider);
+  }
+
 
   render() {
     const { provider } = this.props;
